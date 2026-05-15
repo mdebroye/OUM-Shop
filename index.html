@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Magic Upload">
+<title>Once Upon Magic — Upload</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --dark: #0F0D0B;
+    --dark2: #1A1714;
+    --card: #221E1A;
+    --border: rgba(201,168,76,0.2);
+    --text: #F5EFE6;
+    --muted: rgba(245,239,230,0.5);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: calc(var(--safe-top) + 16px) 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--dark);
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+  .logo span { font-style: italic; font-weight: 400; }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* ── SETTINGS PANEL ── */
+  .settings-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+
+  .settings-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    backdrop-filter: blur(4px);
+  }
+  .settings-overlay.open { display: flex; align-items: flex-end; }
+
+  .settings-panel {
+    background: var(--dark2);
+    border: 1px solid var(--border);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px calc(var(--safe-bottom) + 24px);
+    width: 100%;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+
+  .settings-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .settings-row { margin-bottom: 14px; }
+  .settings-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 20px; padding-bottom: calc(var(--safe-bottom) + 24px); }
+
+  /* ── PHOTO ZONE ── */
+  .photo-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 16px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .photo-zone:active { background: rgba(201,168,76,0.04); }
+  .photo-zone.has-images { border-style: solid; border-color: var(--gold); }
+
+  .photo-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .photo-icon { font-size: 40px; line-height: 1; }
+  .photo-zone-text { font-size: 14px; color: var(--muted); text-align: center; }
+  .photo-zone-hint { font-size: 11px; color: rgba(245,239,230,0.3); }
+
+  .photo-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    width: 100%;
+    padding: 12px;
+  }
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    background: var(--card);
+  }
+  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-thumb .remove-btn {
+    position: absolute; top: 4px; right: 4px;
+    background: rgba(0,0,0,0.7);
+    border: none; color: #fff;
+    width: 20px; height: 20px;
+    border-radius: 50%; font-size: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--gold);
+  }
+  .form-select option { background: var(--dark2); }
+  .form-textarea { resize: none; min-height: 100px; line-height: 1.5; }
+
+  .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* ── AI DESCRIPTION AREA ── */
+  .ai-box {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.03));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-top: 8px;
+    display: none;
+  }
+  .ai-box.visible { display: block; }
+  .ai-box-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .ai-badge {
+    font-size: 10px; font-weight: 500;
+    color: var(--gold);
+    background: rgba(201,168,76,0.15);
+    border-radius: 20px; padding: 2px 8px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .ai-loading { display: flex; gap: 4px; align-items: center; }
+  .ai-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--gold); opacity: 0.4;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  .ai-dot:nth-child(2) { animation-delay: 0.2s; }
+  .ai-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,100%{opacity:0.2} 50%{opacity:0.9} }
+
+  .ai-use-btn {
+    background: none; border: 1px solid var(--border);
+    color: var(--gold); border-radius: 8px;
+    padding: 6px 12px; font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer; margin-top: 10px;
+    width: 100%; transition: background 0.2s;
+  }
+  .ai-use-btn:active { background: rgba(201,168,76,0.1); }
+
+  /* ── STATUS BADGE ── */
+  .status-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .status-option { display: none; }
+  .status-label {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; padding: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; cursor: pointer;
+    font-size: 13px; transition: all 0.2s;
+  }
+  .status-option:checked + .status-label {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+
+  /* ── SUBMIT BTN ── */
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none; border-radius: 14px;
+    color: var(--dark);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500; font-size: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+  }
+  .submit-btn:active { opacity: 0.85; transform: scale(0.98); }
+  .submit-btn:disabled { opacity: 0.4; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: calc(var(--safe-bottom) + 20px); left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 20px;
+    font-size: 14px; white-space: nowrap;
+    z-index: 300; transition: transform 0.3s ease;
+    max-width: calc(100vw - 40px);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: #4CAF50; color: #81C784; }
+  .toast.error { border-color: #e57373; color: #ef9a9a; }
+
+  /* ── PROGRESS ── */
+  .progress-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 400; backdrop-filter: blur(6px);
+    flex-direction: column;
+    align-items: center; justify-content: center; gap: 20px;
+  }
+  .progress-overlay.show { display: flex; }
+  .progress-icon { font-size: 48px; animation: spin 2s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-text { color: var(--gold); font-family: 'Cormorant Garamond', serif; font-size: 20px; }
+  .progress-sub { color: var(--muted); font-size: 13px; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px; background: var(--border); margin: 20px 0;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; color: var(--gold-light);
+    margin-bottom: 14px;
+  }
+
+  /* ── COLLECTION CHIPS ── */
+  .collection-chips {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    max-height: 120px; overflow-y: auto;
+  }
+  .chip-input { display: none; }
+  .chip-label {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 5px 12px;
+    font-size: 12px; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip-input:checked + .chip-label {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--gold); color: var(--gold);
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo">Once <span>Upon</span> Magic</div>
+    <div class="header-sub">Ajout rapide produit</div>
+  </div>
+  <button class="settings-btn" onclick="openSettings()">⚙ Config</button>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettingsOutside(event)">
+  <div class="settings-panel">
+    <div class="settings-title">✦ Configuration</div>
+
+    <div class="settings-row">
+      <div class="settings-label">Clé API Anthropic (pour l'IA)</div>
+      <input class="form-input" type="password" id="cfgAnthropicKey" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Token Shopify Admin</div>
+      <input class="form-input" type="password" id="cfgShopifyToken" placeholder="shpat_..." autocomplete="off">
+    </div>
+    <div class="settings-row">
+      <div class="settings-label">Domaine boutique</div>
+      <input class="form-input" type="text" id="cfgShopDomain" placeholder="onceuponmagic.myshopify.com" autocomplete="off">
+    </div>
+    <button class="submit-btn" onclick="saveSettings()" style="margin-top:16px">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-icon">✦</div>
+  <div class="progress-text" id="progressText">Publication en cours…</div>
+  <div class="progress-sub" id="progressSub">Envoi des photos vers Shopify</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PHOTOS -->
+  <div class="section-title">📸 Photos du produit</div>
+  <div class="photo-zone" id="photoZone">
+    <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+    <div class="photo-preview-grid" id="previewGrid" style="display:none"></div>
+    <div id="photoPlaceholder">
+      <div class="photo-icon">🪄</div>
+      <div class="photo-zone-text">Appuyez pour choisir<br>vos photos</div>
+      <div class="photo-zone-hint">JPG, PNG, HEIC · plusieurs à la fois</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- PRODUCT INFO -->
+  <div class="section-title">✦ Informations</div>
+
+  <div class="form-group">
+    <label class="form-label">Titre du produit *</label>
+    <input class="form-input" id="productTitle" type="text" placeholder="Ex: Loungefly Disney Stitch Mini Backpack" autocomplete="off">
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Type de produit</label>
+    <input class="form-input" id="productType" type="text" placeholder="Ex: Mini Backpack, Art de la table…">
+  </div>
+
+  <div class="price-row">
+    <div class="form-group">
+      <label class="form-label">Prix (€) *</label>
+      <input class="form-input" id="productPrice" type="number" placeholder="29.90" step="0.01" min="0">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Prix barré (€)</label>
+      <input class="form-input" id="comparePrice" type="number" placeholder="39.90" step="0.01" min="0">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Tags (séparés par virgule)</label>
+    <input class="form-input" id="productTags" type="text" placeholder="Stitch, Import US, Loungefly">
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- AI DESCRIPTION -->
+  <div class="section-title">🤖 Description</div>
+
+  <div style="display:flex;gap:10px;margin-bottom:12px">
+    <button class="submit-btn" style="flex:1;padding:12px;font-size:13px;margin-top:0" onclick="generateDescription()">
+      ✨ Générer avec l'IA
+    </button>
+  </div>
+
+  <div class="ai-box" id="aiBox">
+    <div class="ai-box-header">
+      <span class="ai-badge">✦ IA</span>
+      <div class="ai-loading" id="aiLoading">
+        <div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div>
+      </div>
+    </div>
+    <div id="aiResult" style="font-size:14px;line-height:1.6;color:var(--muted)"></div>
+    <button class="ai-use-btn" id="aiUseBtn" style="display:none" onclick="useAiDescription()">
+      ↑ Utiliser cette description
+    </button>
+  </div>
+
+  <div class="form-group" style="margin-top:12px">
+    <label class="form-label">Description (modifiable)</label>
+    <textarea class="form-textarea" id="productDescription" placeholder="Description du produit…"></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- COLLECTION -->
+  <div class="section-title">📂 Collection</div>
+  <div class="collection-chips" id="collectionChips">
+    <!-- populated by JS -->
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- STATUS -->
+  <div class="section-title">👁 Statut de publication</div>
+  <div class="status-row">
+    <div>
+      <input type="radio" name="status" id="statusDraft" class="status-option" value="DRAFT" checked>
+      <label for="statusDraft" class="status-label">
+        <div class="status-dot"></div> Brouillon
+      </label>
+    </div>
+    <div>
+      <input type="radio" name="status" id="statusActive" class="status-option" value="ACTIVE">
+      <label for="statusActive" class="status-label">
+        <div class="status-dot"></div> Publié
+      </label>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- SUBMIT -->
+  <button class="submit-btn" id="submitBtn" onclick="publishProduct()">
+    🪄 Publier sur Once Upon Magic
+  </button>
+
+</div>
+
+<script>
+// ──────────────────────────────────────────────
+// CONFIG
+// ──────────────────────────────────────────────
+const COLLECTIONS = [
+  { id: "gid://shopify/Collection/688441164105", title: "Lilo & Stitch" },
+  { id: "gid://shopify/Collection/688440901961", title: "La Reine des Neiges" },
+  { id: "gid://shopify/Collection/688440934729", title: "Disneyland Hotel" },
+  { id: "gid://shopify/Collection/689423450441", title: "Art de la table" },
+  { id: "gid://shopify/Collection/689565991241", title: "Mini-Backpack Import US" },
+  { id: "gid://shopify/Collection/689641324873", title: "Porte-Monnaie & Porte-Cartes" },
+  { id: "gid://shopify/Collection/689637261641", title: "Import US" },
+  { id: "gid://shopify/Collection/689658855753", title: "Loungefly Disney Parks" },
+  { id: "gid://shopify/Collection/689659347273", title: "Décorations" },
+  { id: "gid://shopify/Collection/689659412809", title: "Papeterie" },
+  { id: "gid://shopify/Collection/689659806025", title: "Winnie L'Ourson" },
+  { id: "gid://shopify/Collection/689660002633", title: "Peter Pan" },
+  { id: "gid://shopify/Collection/689660592457", title: "Star Wars" },
+  { id: "gid://shopify/Collection/689660723529", title: "Zootopie" },
+  { id: "gid://shopify/Collection/680959541577", title: "Page d'accueil" },
+  { id: "gid://shopify/Collection/688321659209", title: "Tous nos produits" },
+];
+
+let selectedFiles = [];
+let aiGeneratedText = '';
+
+// ──────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────
+window.onload = () => {
+  loadSettings();
+  renderCollectionChips();
+};
+
+function renderCollectionChips() {
+  const container = document.getElementById('collectionChips');
+  container.innerHTML = COLLECTIONS.map((c, i) => `
+    <input type="checkbox" class="chip-input" id="col_${i}" value="${c.id}">
+    <label for="col_${i}" class="chip-label">${c.title}</label>
+  `).join('');
+}
+
+// ──────────────────────────────────────────────
+// SETTINGS
+// ──────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettingsOutside(e) {
+  if (e.target === document.getElementById('settingsOverlay')) {
+    document.getElementById('settingsOverlay').classList.remove('open');
+  }
+}
+function saveSettings() {
+  localStorage.setItem('oum_anthropic_key', document.getElementById('cfgAnthropicKey').value.trim());
+  localStorage.setItem('oum_shopify_token', document.getElementById('cfgShopifyToken').value.trim());
+  localStorage.setItem('oum_shop_domain', document.getElementById('cfgShopDomain').value.trim());
+  document.getElementById('settingsOverlay').classList.remove('open');
+  showToast('✦ Configuration sauvegardée', 'success');
+}
+function loadSettings() {
+  const ak = localStorage.getItem('oum_anthropic_key') || '';
+  const st = localStorage.getItem('oum_shopify_token') || '';
+  const sd = localStorage.getItem('oum_shop_domain') || 'onceuponmagic.myshopify.com';
+  document.getElementById('cfgAnthropicKey').value = ak;
+  document.getElementById('cfgShopifyToken').value = st;
+  document.getElementById('cfgShopDomain').value = sd;
+}
+function getCfg(k) { return localStorage.getItem(k) || ''; }
+
+// ──────────────────────────────────────────────
+// FILE HANDLING
+// ──────────────────────────────────────────────
+function handleFiles(files) {
+  selectedFiles = [...selectedFiles, ...Array.from(files)];
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('previewGrid');
+  const placeholder = document.getElementById('photoPlaceholder');
+  const zone = document.getElementById('photoZone');
+
+  if (selectedFiles.length === 0) {
+    grid.style.display = 'none';
+    placeholder.style.display = 'flex';
+    placeholder.style.flexDirection = 'column';
+    placeholder.style.alignItems = 'center';
+    zone.classList.remove('has-images');
+    return;
+  }
+
+  placeholder.style.display = 'none';
+  grid.style.display = 'grid';
+  zone.classList.add('has-images');
+
+  grid.innerHTML = selectedFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="photo-thumb">
+      <img src="${url}" alt="">
+      <button class="remove-btn" onclick="removeFile(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removeFile(idx) {
+  selectedFiles.splice(idx, 1);
+  renderPreviews();
+}
+
+// ──────────────────────────────────────────────
+// AI DESCRIPTION
+// ──────────────────────────────────────────────
+async function generateDescription() {
+  const title = document.getElementById('productTitle').value.trim();
+  const type = document.getElementById('productType').value.trim();
+  const tags = document.getElementById('productTags').value.trim();
+  const key = getCfg('oum_anthropic_key');
+
+  if (!key) {
+    showToast('⚠ Configurez votre clé API Anthropic', 'error');
+    openSettings();
+    return;
+  }
+
+  if (!title) {
+    showToast('⚠ Saisissez d\'abord un titre', 'error');
+    return;
+  }
+
+  const aiBox = document.getElementById('aiBox');
+  const aiLoading = document.getElementById('aiLoading');
+  const aiResult = document.getElementById('aiResult');
+  const aiUseBtn = document.getElementById('aiUseBtn');
+
+  aiBox.classList.add('visible');
+  aiLoading.style.display = 'flex';
+  aiResult.textContent = '';
+  aiUseBtn.style.display = 'none';
+
+  // Build multimodal message
+  const contentParts = [];
+
+  // Add images if available
+  for (let i = 0; i < Math.min(selectedFiles.length, 3); i++) {
+    const b64 = await fileToBase64(selectedFiles[i]);
+    const mime = selectedFiles[i].type || 'image/jpeg';
+    contentParts.push({
+      type: 'image',
+      source: { type: 'base64', media_type: mime, data: b64 }
+    });
+  }
+
+  contentParts.push({
+    type: 'text',
+    text: `Tu es expert en e-commerce Disney et objets magiques. 
+Rédige une description produit enthousiaste et commerciale en français pour la boutique "Once Upon Magic" spécialisée dans les produits Disney.
+
+Produit : ${title}
+${type ? `Type : ${type}` : ''}
+${tags ? `Tags/Univers : ${tags}` : ''}
+${selectedFiles.length > 0 ? 'Des photos du produit sont fournies.' : ''}
+
+Rédige une description de 3-4 phrases qui :
+- Donne envie d'acheter
+- Met en avant la magie Disney
+- Mentionne la qualité et l'aspect collectionneur si pertinent
+- Utilise un ton chaleureux et enthousiaste
+- Termine par une invitation à rejoindre la magie
+
+Réponds uniquement avec la description, sans titre ni mise en forme.`
+  });
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{ role: 'user', content: contentParts }]
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error.message);
+
+    aiGeneratedText = data.content?.[0]?.text || '';
+    aiLoading.style.display = 'none';
+    aiResult.textContent = aiGeneratedText;
+    aiUseBtn.style.display = 'block';
+
+  } catch (err) {
+    aiLoading.style.display = 'none';
+    aiResult.textContent = '❌ Erreur : ' + err.message;
+    console.error(err);
+  }
+}
+
+function useAiDescription() {
+  document.getElementById('productDescription').value = aiGeneratedText;
+  showToast('✦ Description appliquée', 'success');
+}
+
+async function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ──────────────────────────────────────────────
+// PUBLISH PRODUCT
+// ──────────────────────────────────────────────
+async function publishProduct() {
+  const token = getCfg('oum_shopify_token');
+  const domain = getCfg('oum_shop_domain') || 'onceuponmagic.myshopify.com';
+  const title = document.getElementById('productTitle').value.trim();
+  const price = document.getElementById('productPrice').value.trim();
+
+  if (!token) { showToast('⚠ Configurez votre token Shopify', 'error'); openSettings(); return; }
+  if (!title) { showToast('⚠ Le titre est requis', 'error'); return; }
+  if (!price) { showToast('⚠ Le prix est requis', 'error'); return; }
+  if (selectedFiles.length === 0) { showToast('⚠ Ajoutez au moins une photo', 'error'); return; }
+
+  const desc = document.getElementById('productDescription').value.trim();
+  const comparePrice = document.getElementById('comparePrice').value.trim();
+  const tags = document.getElementById('productTags').value.trim();
+  const productType = document.getElementById('productType').value.trim();
+  const status = document.querySelector('input[name="status"]:checked').value;
+
+  // Collect selected collections
+  const selectedCollections = [...document.querySelectorAll('.chip-input:checked')].map(c => c.value);
+
+  showProgress('Conversion des photos…', 'Préparation des images');
+
+  const SHOPIFY_URL = `https://${domain}/admin/api/2024-01/graphql.json`;
+  const HEADERS = {
+    'Content-Type': 'application/json',
+    'X-Shopify-Access-Token': token
+  };
+
+  try {
+    // Step 1: Create product
+    setProgress('Création du produit…', 'Envoi vers Shopify');
+
+    const descHtml = desc ? `<p>${desc.replace(/\n/g, '</p><p>')}</p>` : '';
+
+    const productInput = {
+      title,
+      descriptionHtml: descHtml,
+      productType: productType || '',
+      tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
+      status,
+      variants: [{
+        price: price,
+        compareAtPrice: comparePrice || null,
+        inventoryManagement: null
+      }]
+    };
+
+    const createRes = await fetch(SHOPIFY_URL, {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify({
+        query: `
+          mutation productCreate($input: ProductInput!) {
+            productCreate(input: $input) {
+              product { id title }
+              userErrors { field message }
+            }
+          }
+        `,
+        variables: { input: productInput }
+      })
+    });
+
+    const createData = await createRes.json();
+    const errors = createData.data?.productCreate?.userErrors;
+    if (errors?.length) throw new Error(errors[0].message);
+
+    const productId = createData.data?.productCreate?.product?.id;
+    if (!productId) throw new Error('Impossible de créer le produit');
+
+    // Step 2: Upload images
+    setProgress('Upload des photos…', `${selectedFiles.length} image(s) en cours`);
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const b64 = await fileToBase64(selectedFiles[i]);
+      const mime = selectedFiles[i].type || 'image/jpeg';
+
+      await fetch(SHOPIFY_URL, {
+        method: 'POST',
+        headers: HEADERS,
+        body: JSON.stringify({
+          query: `
+            mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {
+              productCreateMedia(productId: $productId, media: $media) {
+                media { ... on MediaImage { id } }
+                mediaUserErrors { field message }
+              }
+            }
+          `,
+          variables: {
+            productId,
+            media: [{
+              mediaContentType: 'IMAGE',
+              originalSource: `data:${mime};base64,${b64}`
+            }]
+          }
+        })
+      });
+
+      setProgress('Upload des photos…', `Image ${i+1}/${selectedFiles.length}`);
+    }
+
+    // Step 3: Add to collections
+    if (selectedCollections.length > 0) {
+      setProgress('Ajout aux collections…', selectedCollections.length + ' collection(s)');
+
+      for (const colId of selectedCollections) {
+        await fetch(SHOPIFY_URL, {
+          method: 'POST',
+          headers: HEADERS,
+          body: JSON.stringify({
+            query: `
+              mutation collectionAddProducts($id: ID!, $productIds: [ID!]!) {
+                collectionAddProducts(id: $id, productIds: $productIds) {
+                  userErrors { field message }
+                }
+              }
+            `,
+            variables: { id: colId, productIds: [productId] }
+          })
+        });
+      }
+    }
+
+    hideProgress();
+    showToast('🪄 Produit publié avec succès !', 'success');
+    resetForm();
+
+  } catch (err) {
+    hideProgress();
+    showToast('❌ Erreur : ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
+function resetForm() {
+  selectedFiles = [];
+  renderPreviews();
+  document.getElementById('productTitle').value = '';
+  document.getElementById('productType').value = '';
+  document.getElementById('productPrice').value = '';
+  document.getElementById('comparePrice').value = '';
+  document.getElementById('productTags').value = '';
+  document.getElementById('productDescription').value = '';
+  document.getElementById('aiBox').classList.remove('visible');
+  document.getElementById('statusDraft').checked = true;
+  document.querySelectorAll('.chip-input').forEach(c => c.checked = false);
+}
+
+// ──────────────────────────────────────────────
+// PROGRESS & TOAST
+// ──────────────────────────────────────────────
+function showProgress(text, sub) {
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressSub').textContent = sub;
+  document.getElementById('progressOverlay').classList.add('show');
+}
+function setProgress(text, sub) {
+  document.getElementById('progressText').textContent = text;
+  document.getElementById('progressSub').textContent = sub;
+}
+function hideProgress() {
+  document.getElementById('progressOverlay').classList.remove('show');
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
